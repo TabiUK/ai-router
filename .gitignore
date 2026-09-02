@@ -1,0 +1,56 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python packaging/build output
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Test / coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checker / linter caches
+.mypy_cache/
+.ruff_cache/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
+*~
+
+# Model/cache files
+*.pth
+*.pt
+*.onnx
+
+# OpenVINO generated model files
+*.xml
+*.bin
+
+# Local output
+
+output/
+
+# Internal AI handover
+README_CHATGPT.md
