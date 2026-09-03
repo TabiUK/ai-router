@@ -64,14 +64,16 @@ Intel GPU diagnostic testing
 Real Intel Iris Xe OpenVINO GPU inference on Windows
 PyTorch CUDA ResNet18 inference and routing on Windows
 PyTorch CUDA ResNet18 inference and routing on Linux/RunPod
+PyTorch MPS ResNet18 inference and routing on Apple Silicon
 Routable Intel OpenVINO GPU for image classification
 ComfyUI device-info and image-classification integration
 ```
 
-Routable Intel GPU and NVIDIA CUDA support are implemented. Routable Intel NPU
-support is not. The packaged dependency target remains Python 3.11; the RunPod
-validation used an externally provisioned Python 3.12.3 environment and does
-not widen the supported `requires-python` range.
+Routable Intel GPU, NVIDIA CUDA, and Apple MPS support are implemented.
+Routable Intel NPU and Core ML support are not. The packaged dependency target
+remains Python 3.11; the RunPod validation used an externally provisioned
+Python 3.12.3 environment and does not widen the supported `requires-python`
+range.
 
 ---
 
@@ -188,7 +190,7 @@ OpenVINO is optional so that:
 ```text
 non-Intel systems
 non-OpenVINO users
-future CUDA-only systems
+CUDA-only or MPS-only systems
 ```
 
 are not forced to install an Intel-specific runtime.
@@ -245,7 +247,7 @@ Torchvision   0.17.2
 
 These versions are declared in `pyproject.toml`.
 
-Current real image-classification backends rely on Torchvision ResNet18, so both packages are part of the base runtime requirements.
+Current real image-classification backends rely on Torchvision ResNet18, so both packages are part of the base runtime requirements. PyTorch MPS requires no additional Python dependency beyond this base PyTorch/Torchvision stack.
 
 ---
 
@@ -587,17 +589,76 @@ No ROCm-specific dependency is currently required.
 Current state:
 
 ```text
-Future
-Not implemented
+PyTorch MPS implemented and routable for image_classification
+Validated on Apple M1 Pro, arm64, macOS 15.7.7
+Core ML not implemented
 ```
 
-No Core ML or MPS-specific dependency is currently part of the validated AI Router setup.
+The production `PyTorch MPS` backend is automatically available when PyTorch
+reports both:
+
+```text
+torch.backends.mps.is_built() == True
+torch.backends.mps.is_available() == True
+```
+
+Its stable routing and benchmark-history identity is `PyTorch MPS`, and its
+stable result identity is `pytorch_mps_resnet18`. It supports:
+
+```text
+TaskType.IMAGE_CLASSIFICATION
+Torchvision ResNet18 with ImageNet pretrained weights and preprocessing
+```
+
+Current scores:
+
+```text
+PERFORMANCE = 37
+BALANCED    = 57
+LOW_POWER   = 0
+```
+
+The generic backend defaults to zero warm-up runs. The registered production
+backend performs two warm-up runs once per backend instance. First-use warm-up
+and model initialization remain in the router's total execution time;
+subsequent results report zero warm-up runs and `0.0` ms warm-up time.
+
+Real hardware validation was performed on:
+
+```text
+Apple M1 Pro
+arm64
+macOS 15.7.7
+Python 3.11.9
+PyTorch 2.2.2
+Torchvision 0.17.2
+torch.backends.mps.is_built() == True
+torch.backends.mps.is_available() == True
+```
+
+Real MPS ResNet18 inference and router participation were validated. In the
+direct backend comparison on this M1 Pro, representative warm inference was
+approximately 8.5 ms on MPS versus approximately 13 ms on Torchvision CPU.
+Representative warm total execution was approximately 35 ms on MPS versus
+approximately 38-43 ms on CPU. MPS had a larger first-run/cold-start cost.
+
+In the 15-route BALANCED routing validation, cold-start exploration collected
+five records for each backend. After evidence was available, Torchvision CPU
+remained the BALANCED winner because its three-point higher base score
+outweighed MPS's modest historical-performance advantage. MPS must not be
+described as universally faster or as the guaranteed routing winner.
+LOW_POWER is zero because no power-efficiency advantage has been measured.
+MPS timing and routing results are hardware- and load-specific.
+
+No Core ML or MPS-specific Python dependency is currently part of the validated
+AI Router setup. MPS uses the existing base PyTorch/Torchvision stack.
 
 ---
 
 # 17. Operating System — macOS
 
-Current development has been validated on macOS with an Intel x86_64 Mac.
+Current development has been validated on macOS with an Intel x86_64 Mac and
+an Apple M1 Pro arm64 Mac.
 
 Current OpenVINO device result:
 
@@ -609,6 +670,7 @@ Expected current behavior:
 
 ```text
 OpenVINO CPU        works
+PyTorch MPS         works on the validated Apple M1 Pro
 Intel GPU production backend is unavailable and the diagnostic cleanly skips
 Intel NPU diagnostic cleanly skips
 ```
@@ -842,6 +904,21 @@ BALANCED. LOW_POWER remains CPU-oriented because CUDA has no measured power
 advantage. These observations are hardware- and load-specific, not guaranteed
 routing outcomes.
 
+Current PyTorch MPS image-classification policy scores are:
+
+```text
+PERFORMANCE = 37
+BALANCED    = 57
+LOW_POWER   = 0
+```
+
+On the validated Apple M1 Pro, MPS produced a modest historical-performance
+advantage over Torchvision CPU after cold-start exploration, but Torchvision
+CPU remained the 15-route BALANCED winner because its base score is three
+points higher. LOW_POWER remains zero because no MPS power-efficiency
+advantage has been measured. These observations are hardware- and
+load-specific, not guaranteed routing outcomes.
+
 ---
 
 # 27. OpenVINO / Torchvision Performance Characteristics
@@ -870,6 +947,33 @@ but faster warm inference on this workload
 ```
 
 These values are examples, not universal performance guarantees.
+
+Representative direct backend comparison from the validated Apple M1 Pro:
+
+```text
+PyTorch MPS
+-----------
+Warm total: ~35 ms
+Warm inference: ~8.5 ms
+
+Torchvision CPU
+---------------
+Warm total: ~38-43 ms
+Warm inference: ~13 ms
+```
+
+Important:
+
+```text
+MPS had a larger first-run/cold-start cost
+MPS was not the guaranteed BALANCED routing winner
+```
+
+In the 15-route BALANCED routing validation, cold-start exploration collected
+five records for each backend. After evidence was available, Torchvision CPU
+remained the BALANCED winner because its three-point higher base score
+outweighed MPS's modest historical-performance advantage. These values are
+hardware- and load-specific examples, not universal performance guarantees.
 
 ---
 
@@ -964,6 +1068,8 @@ A current working checkout should include at least:
 ```text
 backends/
     cpu.py
+    cuda.py
+    mps.py
     mock_accelerator.py
     openvino.py
     torchvision_classifier.py
@@ -984,6 +1090,7 @@ examples/
     run_task_png.py
 
 tests/
+    test_mps_backend.py
     test_openvino_cpu.py
     test_openvino_gpu.py
     test_openvino_npu.py

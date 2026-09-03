@@ -48,8 +48,9 @@ Implemented routing targets:
 - OpenVINO CPU ResNet18 image classification
 - OpenVINO Intel GPU ResNet18 image classification with dynamic Intel GPU discovery
 - PyTorch CUDA ResNet18 image classification on CUDA device 0
+- PyTorch MPS ResNet18 image classification when PyTorch reports MPS as built and available
 
-The Mock Accelerator is test-only and does not self-register. OpenVINO NPU is diagnostic-only, not a production routing target. Apple MPS/Core ML, AMD GPU, LLM, image-generation, and distributed/remote backends remain future work.
+The Mock Accelerator is test-only and does not self-register. OpenVINO NPU is diagnostic-only, not a production routing target. Core ML, AMD GPU, LLM, image-generation, and distributed/remote backends remain future work.
 
 Implemented routing and measurement behavior:
 
@@ -82,6 +83,7 @@ OpenVINO     2025.4.1 (optional)
 Real-hardware validation includes:
 
 - Intel x86_64 macOS: Torchvision CPU and OpenVINO CPU
+- Apple M1 Pro arm64 macOS 15.7.7: PyTorch MPS ResNet18 inference and router participation on Python 3.11.9, PyTorch 2.2.2, and Torchvision 0.17.2
 - Windows: Intel Iris Xe OpenVINO GPU and NVIDIA RTX A1000 Laptop GPU CUDA
 - RunPod Linux on NVIDIA RTX 4090: Python 3.12.3, Torch 2.10.0+cu128, Torchvision 0.25.0+cu128, CUDA backend, routing tests, and ComfyUI integration
 
@@ -99,6 +101,7 @@ ai-router/
 │   ├── __init__.py
 │   ├── cpu.py
 │   ├── cuda.py
+│   ├── mps.py
 │   ├── mock_accelerator.py
 │   ├── openvino.py
 │   └── torchvision_classifier.py
@@ -130,6 +133,7 @@ ai-router/
 │   └── run_task_png.py
 │
 ├── tests/
+│   └── test_mps_backend.py
 │
 ├── .gitignore
 ├── BACKEND_GUIDE.md
@@ -223,13 +227,15 @@ Backend
    │
    ├── TorchvisionClassifierBackend
    │
+   ├── PyTorchMPSBackend
+   │
    ├── IntelNPUBackend          (future)
    │
-   ├── NvidiaCUDABackend        (future)
+   ├── NvidiaCUDABackend
    │
    ├── AMDBackend               (future)
    │
-   └── AppleMPSBackend          (future)
+   └── CoreMLBackend            (future)
 ```
 
 Backends register themselves with AI Router.
@@ -958,6 +964,53 @@ the model or initializing CUDA, and normal CPU/OpenVINO routing continues.
 
 Real-hardware CUDA validation includes an NVIDIA RTX A1000 Laptop GPU on Windows and an NVIDIA GeForce RTX 4090 on RunPod Linux. Reusable code does not assume either model name.
 
+## Current PyTorch MPS Production State
+
+The `PyTorch MPS` backend is implemented, tested, and routable for
+`TaskType.IMAGE_CLASSIFICATION`. It uses Torchvision pretrained ResNet18 with
+the standard ImageNet preprocessing and categories. Its stable routing and
+benchmark-history identity is `PyTorch MPS`; its stable result identity is
+`pytorch_mps_resnet18`.
+
+The backend is automatically available when PyTorch reports both:
+
+```text
+torch.backends.mps.is_built() == True
+torch.backends.mps.is_available() == True
+```
+
+Current image-classification scores are:
+
+```text
+PERFORMANCE = 37
+BALANCED    = 57
+LOW_POWER   = 0
+```
+
+The generic backend defaults to zero warm-up runs. The registered production
+backend performs two warm-up inferences once per backend instance. Warm-up and
+model initialization remain in the first routed total execution time; later
+calls report zero warm-up runs and zero warm-up time.
+
+MPS requires no additional Python dependency beyond the existing base
+PyTorch/Torchvision stack. Real-hardware validation was performed on Apple M1
+Pro, arm64, macOS 15.7.7, Python 3.11.9, PyTorch 2.2.2, and Torchvision
+0.17.2. In that environment, real MPS ResNet18 inference and router
+participation were validated.
+
+In the direct backend comparison on that M1 Pro, representative warm inference
+was approximately 8.5 ms on MPS versus approximately 13 ms on Torchvision CPU.
+Representative warm total execution was approximately 35 ms on MPS versus
+approximately 38-43 ms on CPU. MPS had a larger first-run cold-start cost.
+
+In the 15-route BALANCED routing validation, cold-start exploration collected
+five records for each backend. After evidence was available, Torchvision CPU
+remained the BALANCED winner because its three-point higher base score
+outweighed MPS's modest historical-performance advantage. MPS should not be
+described as universally faster or as the guaranteed routing winner. LOW_POWER
+is zero because no power-efficiency advantage has been measured. MPS timing and
+routing results are hardware- and load-specific.
+
 ## Current Next Priorities
 
 - Decide how the internal `README_CHATGPT.md` handover will be excluded from the eventual public repository.
@@ -986,14 +1039,14 @@ Final routing decision
 
 # Backend Roadmap
 
-Implemented production routing targets are Torchvision CPU, OpenVINO CPU, dynamically discovered OpenVINO Intel GPU, and PyTorch CUDA device 0 for ResNet18 image classification, plus the generic CPU example backend.
+Implemented production routing targets are Torchvision CPU, OpenVINO CPU, dynamically discovered OpenVINO Intel GPU, PyTorch CUDA device 0, and PyTorch MPS for ResNet18 image classification, plus the generic CPU example backend.
 
 Future backend work may include:
 
 ```text
 OpenVINO NPU (after real-hardware validation)
 AMD GPU / ROCm
-Apple MPS / Core ML
+Core ML
 Qualcomm NPU
 Additional models and task types
 Distributed or remote execution
@@ -1154,6 +1207,8 @@ Current progression:
 [✓] PyTorch CUDA production backend implemented with scores 37 / 57 / 0
 [✓] CUDA first-use warm-up, history isolation, routing, and fallback regression validated
 [✓] RunPod RTX 4090 CUDA and routing regressions validated on Python 3.12.3 / Torch 2.10.0+cu128
+[✓] PyTorch MPS production backend implemented with scores 37 / 57 / 0
+[✓] MPS first-use warm-up, inference, registration, and routing participation validated on Apple M1 Pro
 [✓] ComfyUI Device Info, Show Device Info, Image Classification, and Show Classification nodes implemented
 [✓] ComfyUI device-info and classification output flows validated through the UI on RunPod RTX 4090
 [✓] ComfyUI BALANCED cold-start exploration and return to historical scoring validated on RunPod RTX 4090
@@ -1190,4 +1245,4 @@ Hardware-specific knowledge belongs in the backend modules.
 
 **Early experimental prototype — not production ready.**
 
-The current implementation routes real ResNet18 image classification across available Torchvision CPU, OpenVINO CPU, dynamically discovered Intel GPU, and PyTorch CUDA backends. It performs automatic cold-start exploration, maintains recent in-memory benchmark history, and is integrated with ComfyUI. Broader workloads, persistent history, hardware-load monitoring, and additional accelerator families remain future work.
+The current implementation routes real ResNet18 image classification across available Torchvision CPU, OpenVINO CPU, dynamically discovered Intel GPU, PyTorch CUDA, and PyTorch MPS backends. It performs automatic cold-start exploration, maintains recent in-memory benchmark history, and is integrated with ComfyUI. Broader workloads, persistent history, hardware-load monitoring, and additional accelerator families remain future work.

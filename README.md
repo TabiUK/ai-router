@@ -14,9 +14,20 @@ The project is under active development and is not yet a stable production API. 
 | OpenVINO | Optional OpenVINO CPU image classification |
 | OpenVINO Intel GPU | Optional image classification when OpenVINO detects an Intel GPU |
 | PyTorch CUDA | Image classification on CUDA device 0 when CUDA-enabled PyTorch detects a compatible NVIDIA GPU |
+| PyTorch MPS | Image classification when PyTorch reports Apple MPS as built and available |
 | Generic CPU | Simple `general` and `classification` fallback used by the core routing examples |
 
-The mock accelerator is test-only and does not self-register. OpenVINO NPU, Apple MPS/Core ML, image generation, language models, and distributed or remote execution are not currently supported routing targets.
+The mock accelerator is test-only and does not self-register. OpenVINO NPU, Core ML, image generation, language models, and distributed or remote execution are not currently supported routing targets.
+
+The `PyTorch MPS` backend supports `TaskType.IMAGE_CLASSIFICATION` using
+Torchvision pretrained ResNet18 with ImageNet preprocessing. Its stable backend
+name is `"PyTorch MPS"` and its stable result identity is
+`"pytorch_mps_resnet18"`. It is automatically available when
+`torch.backends.mps.is_built()` and `torch.backends.mps.is_available()` both
+report true. Current policy scores are `PERFORMANCE = 37`, `BALANCED = 57`,
+and `LOW_POWER = 0`; LOW_POWER is zero because no power-efficiency advantage
+has been measured. The registered production backend performs two warm-up runs
+once per backend instance.
 
 ## Routing
 
@@ -53,7 +64,7 @@ Install optional OpenVINO support with:
 python -m pip install -e ".[openvino]"
 ```
 
-CUDA requires a compatible NVIDIA driver and CUDA-enabled PyTorch/Torchvision wheels appropriate for the platform. See [BUILD.md](BUILD.md) before replacing the pinned base wheels. The pretrained ResNet18 weights are downloaded by Torchvision on first use if they are not already cached.
+CUDA requires a compatible NVIDIA driver and CUDA-enabled PyTorch/Torchvision wheels appropriate for the platform. MPS requires no additional Python dependency beyond the existing base PyTorch/Torchvision stack, but is available only when `torch.backends.mps.is_built()` and `torch.backends.mps.is_available()` both report true. See [BUILD.md](BUILD.md) before replacing the pinned base wheels. The pretrained ResNet18 weights are downloaded by Torchvision on first use if they are not already cached.
 
 ## Minimal Python example
 
@@ -100,12 +111,15 @@ Automated router tests and the actual RunPod RTX 4090 workflow validated cold-st
 Current real-hardware validation includes:
 
 - Intel x86_64 macOS: Torchvision CPU and OpenVINO CPU.
+- Apple M1 Pro arm64 macOS 15.7.7: PyTorch MPS ResNet18 inference and router participation on Python 3.11.9, PyTorch 2.2.2, and Torchvision 0.17.2.
 - 64-bit Windows: OpenVINO on Intel Iris Xe Graphics and PyTorch CUDA on an NVIDIA RTX A1000 Laptop GPU.
 - 64-bit Linux on RunPod with an NVIDIA GeForce RTX 4090: AI Router source,
   the CUDA backend, routing tests, and ComfyUI integration were validated on
   Python 3.12.3 with Torch 2.10.0+cu128 and Torchvision 0.25.0+cu128. This
   externally provisioned environment is not represented by the dependency
   versions pinned in `pyproject.toml`.
+
+On the validated M1 Pro, direct backend comparison showed representative warm inference around 8.5 ms on MPS versus about 13 ms on Torchvision CPU, with representative warm total execution around 35 ms on MPS versus about 38-43 ms on CPU. MPS had a larger first-run cold-start cost. In a 15-route BALANCED routing validation, cold-start exploration collected five records for each backend; after evidence was available, Torchvision CPU remained the BALANCED winner because its three-point higher base score outweighed MPS's modest historical-performance advantage. These timing and routing results are hardware- and load-specific, not universal guarantees.
 
 Availability on other hardware depends on the installed runtime, drivers, and framework wheels and should not be assumed from device family alone. See [REQUIREMENTS.md](REQUIREMENTS.md) for the detailed compatibility record.
 
