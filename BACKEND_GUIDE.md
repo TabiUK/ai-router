@@ -193,9 +193,11 @@ simultaneously registered production backends.
 
 ## 3.2 `device_type`
 
-`device_type` is a broad diagnostic category such as `cpu`, `cuda`, or
-`openvino`. It is returned in routing metadata but is not the benchmark-history
-key. A backend **SHOULD** keep it concise and stable.
+`device_type` is the physical device class, with valid examples such as `cpu`,
+`gpu`, `npu`, and `accelerator`. Runtime or framework technology such as CUDA,
+MPS, or OpenVINO is not what `device_type` represents. It is returned in
+routing metadata but is not the benchmark-history key. A backend **SHOULD**
+keep it concise and stable.
 
 ## 3.3 `available`
 

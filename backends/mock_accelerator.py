@@ -1,6 +1,7 @@
 from typing import Any
 
 from core.backend import Backend, BackendInfo
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
 
@@ -10,7 +11,7 @@ class MockAcceleratorBackend(Backend):
     def detect(self) -> BackendInfo:
         return BackendInfo(
             name="Mock Accelerator",
-            device_type="accelerator",
+            device_type=DeviceType.ACCELERATOR,
             available=True,
             details={
                 "description": "Test backend for AI Router",

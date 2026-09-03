@@ -3,6 +3,7 @@ from typing import Any
 
 from core.backend import Backend, BackendInfo
 from core.backend_registry import register_backend
+from core.device_types import DeviceType
 from core.task_types import TaskType
 from core.policy import RoutingPolicy
 
@@ -11,7 +12,7 @@ class CPUBackend(Backend):
     def detect(self) -> BackendInfo:
         return BackendInfo(
             name=platform.processor() or "CPU",
-            device_type="cpu",
+            device_type=DeviceType.CPU,
             available=True,
             details={
                 "architecture": platform.machine(),

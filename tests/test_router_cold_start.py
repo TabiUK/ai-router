@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from core.backend import Backend, BackendInfo
 from core.benchmark import BenchmarkRecord
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.router import AIRouter
 from core.task import Task
@@ -67,7 +68,7 @@ class RoutingClock:
 def make_router(policy=RoutingPolicy.BALANCED):
     cpu = RoutingBackend(
         CPU_NAME,
-        "cpu",
+        DeviceType.CPU,
         {
             RoutingPolicy.PERFORMANCE: 40,
             RoutingPolicy.BALANCED: 60,
@@ -76,7 +77,7 @@ def make_router(policy=RoutingPolicy.BALANCED):
     )
     cuda = RoutingBackend(
         CUDA_NAME,
-        "cuda",
+        DeviceType.GPU,
         {
             RoutingPolicy.PERFORMANCE: 60,
             RoutingPolicy.BALANCED: 57,
@@ -89,17 +90,17 @@ def make_router(policy=RoutingPolicy.BALANCED):
 def make_three_backend_router():
     leader = RoutingBackend(
         "Leader",
-        "cpu",
+        DeviceType.CPU,
         {policy: 100 for policy in RoutingPolicy},
     )
     first_refresh = RoutingBackend(
         "First Refresh",
-        "accelerator",
+        DeviceType.ACCELERATOR,
         {policy: 20 for policy in RoutingPolicy},
     )
     second_refresh = RoutingBackend(
         "Second Refresh",
-        "accelerator",
+        DeviceType.ACCELERATOR,
         {policy: 10 for policy in RoutingPolicy},
     )
     router = AIRouter(
@@ -278,7 +279,7 @@ def test_new_under_sampled_candidate_precedes_refresh():
 
     new_backend = RoutingBackend(
         "New Backend",
-        "accelerator",
+        DeviceType.ACCELERATOR,
         {policy: 1 for policy in RoutingPolicy},
     )
     router.backends.append(new_backend)

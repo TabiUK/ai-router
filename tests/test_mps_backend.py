@@ -6,6 +6,7 @@ from backends.mps import (
     RegisteredPyTorchMPSBackend,
 )
 from core.backend_registry import get_registered_backends
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
 
@@ -30,7 +31,7 @@ def main() -> None:
     mps_built, mps_available = expected_mps_state()
 
     assert info.name == MPS_BACKEND_NAME
-    assert info.device_type == "mps"
+    assert info.device_type == DeviceType.GPU
     assert info.available == (mps_built and mps_available)
     assert info.details["mps_built"] == mps_built
     assert info.details["mps_available"] == mps_available

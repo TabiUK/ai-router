@@ -7,6 +7,7 @@ from torchvision.models import ResNet18_Weights, resnet18
 
 from core.backend import Backend, BackendInfo
 from core.backend_registry import register_backend
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
 
@@ -35,6 +36,19 @@ class OpenVINOBackend(Backend):
 
         return f"OpenVINO {self.target_device} Diagnostic"
 
+    @property
+    def device_type(self) -> DeviceType:
+        if self.target_device.startswith("CPU"):
+            return DeviceType.CPU
+
+        if self.target_device.startswith("GPU"):
+            return DeviceType.GPU
+
+        if self.target_device.startswith("NPU"):
+            return DeviceType.NPU
+
+        return DeviceType.ACCELERATOR
+
     def detect(self) -> BackendInfo:
         try:
             import openvino
@@ -42,7 +56,7 @@ class OpenVINOBackend(Backend):
         except ImportError:
             return BackendInfo(
                 name=self.backend_name,
-                device_type="openvino",
+                device_type=self.device_type,
                 available=False,
                 details={
                     "version": None,
@@ -58,7 +72,7 @@ class OpenVINOBackend(Backend):
         except Exception as error:
             return BackendInfo(
                 name=self.backend_name,
-                device_type="openvino",
+                device_type=self.device_type,
                 available=False,
                 details={
                     "version": version,
@@ -70,7 +84,7 @@ class OpenVINOBackend(Backend):
 
         return BackendInfo(
             name=self.backend_name,
-            device_type="openvino",
+            device_type=self.device_type,
             available=self.target_device in available_devices,
             details={
                 "version": version,

@@ -53,7 +53,7 @@ class AIRouterDeviceInfo:
 
             lines.append("")
             lines.append(f"Device: {info.name}")
-            lines.append(f"Type: {info.device_type}")
+            lines.append(f"Type: {info.device_type.value}")
             lines.append(f"Available: {info.available}")
             lines.append(f"Capabilities: {backend.capabilities()}")
 

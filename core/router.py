@@ -249,7 +249,7 @@ class AIRouter:
 
         print(
             f"Routing '{task.task_type.value}' "
-            f"to {info.name} ({info.device_type}) "
+            f"to {info.name} ({info.device_type.value}) "
             f"with score {score} "
             f"using policy '{self.policy.value}'"
         )
@@ -294,7 +294,7 @@ class AIRouter:
         return {
             "routing": {
                 "backend": info.name,
-                "device_type": info.device_type,
+                "device_type": info.device_type.value,
                 "score": score,
                 "policy": self.policy.value,
                 "execution_time_ms": round(elapsed_ms, 2),

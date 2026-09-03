@@ -9,7 +9,7 @@ for backend in discover_backends():
 
     print()
     print(f"Device:       {info.name}")
-    print(f"Type:         {info.device_type}")
+    print(f"Type:         {info.device_type.value}")
     print(f"Available:    {info.available}")
     print(f"Capabilities: {backend.capabilities()}")
     print(f"Details:      {info.details}")

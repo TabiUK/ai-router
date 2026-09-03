@@ -2,11 +2,13 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
+from core.device_types import DeviceType
+
 
 @dataclass
 class BackendInfo:
     name: str
-    device_type: str
+    device_type: DeviceType
     available: bool
     details: dict[str, Any]
 

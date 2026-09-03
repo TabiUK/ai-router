@@ -8,6 +8,7 @@ from torchvision.models import resnet18, ResNet18_Weights
 
 from core.backend import Backend, BackendInfo
 from core.backend_registry import register_backend
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
 
@@ -21,7 +22,7 @@ class TorchvisionClassifierBackend(Backend):
     def detect(self) -> BackendInfo:
         return BackendInfo(
             name="Torchvision ResNet18 CPU",
-            device_type="cpu",
+            device_type=DeviceType.CPU,
             available=True,
             details={
                 "framework": "PyTorch",
