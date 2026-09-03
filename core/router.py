@@ -295,6 +295,12 @@ class AIRouter:
             "routing": {
                 "backend": info.name,
                 "device_type": info.device_type.value,
+                "runtime": info.runtime.value,
+                "accelerator_api": (
+                    info.accelerator_api.value
+                    if info.accelerator_api is not None
+                    else None
+                ),
                 "score": score,
                 "policy": self.policy.value,
                 "execution_time_ms": round(elapsed_ms, 2),

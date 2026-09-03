@@ -54,6 +54,11 @@ class AIRouterDeviceInfo:
             lines.append("")
             lines.append(f"Device: {info.name}")
             lines.append(f"Type: {info.device_type.value}")
+            lines.append(f"Runtime: {info.runtime.value}")
+            lines.append(
+                "Accelerator API: "
+                f"{info.accelerator_api.value if info.accelerator_api is not None else None}"
+            )
             lines.append(f"Available: {info.available}")
             lines.append(f"Capabilities: {backend.capabilities()}")
 

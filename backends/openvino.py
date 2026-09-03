@@ -10,7 +10,7 @@ from core.backend_registry import register_backend
 from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
-
+from core.runtime_types import RuntimeType
 
 class OpenVINOBackend(Backend):
 
@@ -57,6 +57,8 @@ class OpenVINOBackend(Backend):
             return BackendInfo(
                 name=self.backend_name,
                 device_type=self.device_type,
+                runtime=RuntimeType.OPENVINO,
+                accelerator_api=None,
                 available=False,
                 details={
                     "version": None,
@@ -73,6 +75,8 @@ class OpenVINOBackend(Backend):
             return BackendInfo(
                 name=self.backend_name,
                 device_type=self.device_type,
+                runtime=RuntimeType.OPENVINO,
+                accelerator_api=None,
                 available=False,
                 details={
                     "version": version,
@@ -85,6 +89,8 @@ class OpenVINOBackend(Backend):
         return BackendInfo(
             name=self.backend_name,
             device_type=self.device_type,
+            runtime=RuntimeType.OPENVINO,
+            accelerator_api=None,
             available=self.target_device in available_devices,
             details={
                 "version": version,

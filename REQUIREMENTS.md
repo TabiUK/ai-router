@@ -1256,20 +1256,30 @@ These must be documented separately as each hardware backend is implemented.
 
 ---
 
-# 38. Future Backend and Device Identity Cleanup
+# 38. Backend and Device Identity
 
-`BackendInfo.name` currently has mixed semantics: some implementations use it
-to identify physical hardware, while others use it to identify a software
-runtime or inference backend.
+AI Router represents backend identity, physical device class, runtime, and
+accelerator API as separate metadata.
 
-New backend contributions should follow the stable routing, physical-device,
-and result identity guidance in `BACKEND_GUIDE.md`.
+`BackendInfo.name` is the stable backend identity used for routing and benchmark
+history.
 
-Keep the current field unchanged for compatibility until real CPU, GPU, and NPU
-discovery has been validated. After that validation, revise the architecture so
-that backend/runtime identity and physical device identity are represented by
-separate fields. Update routing, benchmark keys, diagnostics, and public result
-metadata together so that neither identity is overloaded or ambiguous.
+`BackendInfo.device_type` identifies the physical device class, such as `cpu`,
+`gpu`, `npu`, or `accelerator`.
+
+`BackendInfo.runtime` identifies the software execution layer, such as `native`,
+`pytorch`, or `openvino`.
+
+`BackendInfo.accelerator_api` identifies an optional hardware acceleration API,
+such as `cuda` or `mps`. Backends without a distinct accelerator API use
+`None`.
+
+Backend contributions should follow the identity and metadata requirements in
+`BACKEND_GUIDE.md`.
+
+Routing output must preserve these identities separately so that backend,
+physical-device, runtime, and accelerator information are not overloaded or
+ambiguous.
 
 ---
 

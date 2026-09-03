@@ -6,7 +6,9 @@ from backends.openvino import (
     find_intel_gpu_device,
 )
 from core.benchmark import BenchmarkStats
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
+from core.runtime_types import RuntimeType
 from core.router import AIRouter
 from core.task import Task
 from core.task_types import TaskType
@@ -156,6 +158,9 @@ def main():
     gpu_info = gpu_backend.detect()
 
     assert gpu_info.name == GPU_BACKEND_NAME
+    assert gpu_info.device_type == DeviceType.GPU
+    assert gpu_info.runtime == RuntimeType.OPENVINO
+    assert gpu_info.accelerator_api is None
     assert gpu_backend.warmup_runs == 2
 
     assert gpu_backend.score(

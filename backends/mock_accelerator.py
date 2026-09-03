@@ -4,7 +4,7 @@ from core.backend import Backend, BackendInfo
 from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
-
+from core.runtime_types import RuntimeType
 
 class MockAcceleratorBackend(Backend):
 
@@ -12,6 +12,8 @@ class MockAcceleratorBackend(Backend):
         return BackendInfo(
             name="Mock Accelerator",
             device_type=DeviceType.ACCELERATOR,
+            runtime=RuntimeType.NATIVE,
+            accelerator_api=None,
             available=True,
             details={
                 "description": "Test backend for AI Router",

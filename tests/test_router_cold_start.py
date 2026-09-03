@@ -8,7 +8,7 @@ from core.policy import RoutingPolicy
 from core.router import AIRouter
 from core.task import Task
 from core.task_types import TaskType
-
+from core.runtime_types import RuntimeType
 
 CPU_NAME = "Test CPU"
 CUDA_NAME = "Test CUDA"
@@ -28,6 +28,8 @@ class RoutingBackend(Backend):
         return BackendInfo(
             name=self.name,
             device_type=self.device_type,
+            runtime=RuntimeType.NATIVE,
+            accelerator_api=None,
             available=True,
             details={},
         )
@@ -178,6 +180,9 @@ def test_exploration_preserves_backend_order_after_score_tie():
     routed = router.route(image_task())
 
     assert routed["routing"]["backend"] == CPU_NAME
+    assert routed["routing"]["device_type"] == "cpu"
+    assert routed["routing"]["runtime"] == "native"
+    assert routed["routing"]["accelerator_api"] is None
 
 
 def test_normal_scoring_resumes_after_sufficient_history():

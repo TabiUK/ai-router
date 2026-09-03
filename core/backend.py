@@ -3,12 +3,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from core.device_types import DeviceType
-
+from core.runtime_types import AcceleratorAPI, RuntimeType
 
 @dataclass
 class BackendInfo:
     name: str
     device_type: DeviceType
+    runtime: RuntimeType
+    accelerator_api: AcceleratorAPI | None
     available: bool
     details: dict[str, Any]
 

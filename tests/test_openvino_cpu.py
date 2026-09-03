@@ -6,7 +6,9 @@ from statistics import median
 import openvino
 from openvino import Core
 
+from core.device_types import DeviceType
 from core.policy import RoutingPolicy
+from core.runtime_types import RuntimeType
 from core.router import AIRouter
 from core.task import Task
 from core.task_types import TaskType
@@ -41,6 +43,9 @@ def main() -> None:
 
     assert openvino_backend.target_device == "CPU"
     assert real_info.name == "OpenVINO"
+    assert real_info.device_type == DeviceType.CPU
+    assert real_info.runtime == RuntimeType.OPENVINO
+    assert real_info.accelerator_api is None
     assert real_info.available is True
     assert real_info.details["available_devices"] == runtime_devices
     assert real_info.details["target_device"] == "CPU"

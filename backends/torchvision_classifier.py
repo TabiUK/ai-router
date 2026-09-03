@@ -11,7 +11,7 @@ from core.backend_registry import register_backend
 from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.task_types import TaskType
-
+from core.runtime_types import RuntimeType
 
 class TorchvisionClassifierBackend(Backend):
 
@@ -23,9 +23,10 @@ class TorchvisionClassifierBackend(Backend):
         return BackendInfo(
             name="Torchvision ResNet18 CPU",
             device_type=DeviceType.CPU,
+            runtime=RuntimeType.PYTORCH,
+            accelerator_api=None,
             available=True,
             details={
-                "framework": "PyTorch",
                 "model": "ResNet18",
             },
         )

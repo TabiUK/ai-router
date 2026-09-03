@@ -29,10 +29,10 @@ core/task_types.py
 core/policy.py
 ```
 
-The CPU, Torchvision, OpenVINO, Intel GPU, and CUDA implementations provide
-current production examples. Where an existing implementation differs from a
-recommended rule, this guide identifies that difference as a current
-limitation or compatibility consideration.
+The CPU, Torchvision, OpenVINO, Intel GPU, CUDA, and PyTorch MPS
+implementations provide current production examples. Where an existing
+implementation differs from a recommended rule, this guide identifies that
+difference as a current limitation or compatibility consideration.
 
 ---
 
@@ -174,6 +174,8 @@ inference time is `None`.
 BackendInfo(
     name=...,
     device_type=...,
+    runtime=...,
+    accelerator_api=...,
     available=...,
     details=...,
 )
@@ -194,12 +196,29 @@ simultaneously registered production backends.
 ## 3.2 `device_type`
 
 `device_type` is the physical device class, with valid examples such as `cpu`,
-`gpu`, `npu`, and `accelerator`. Runtime or framework technology such as CUDA,
-MPS, or OpenVINO is not what `device_type` represents. It is returned in
-routing metadata but is not the benchmark-history key. A backend **SHOULD**
-keep it concise and stable.
+`gpu`, `npu`, and `accelerator`. Runtime or accelerator technology such as
+PyTorch, OpenVINO, CUDA, or MPS is not what `device_type` represents. It is
+returned in routing metadata but is not the benchmark-history key. A backend
+**SHOULD** keep it concise and stable.
 
-## 3.3 `available`
+## 3.3 `runtime`
+
+`runtime` identifies the software execution layer used by the backend. Current
+values include `native`, `pytorch`, and `openvino`.
+
+It is separate from `device_type`: for example, both a CPU backend and a GPU
+backend may use the `pytorch` runtime.
+
+## 3.4 `accelerator_api`
+
+`accelerator_api` identifies an optional hardware acceleration API used by the
+runtime. Current values include `cuda` and `mps`.
+
+Backends that do not use a distinct accelerator API **SHOULD** return `None`.
+For example, OpenVINO is represented by `runtime=openvino` and does not require
+an `accelerator_api` value.
+
+## 3.5 `available`
 
 `available` means that this configured backend instance can currently execute
 its advertised workload on the machine. It is not a general statement that
@@ -208,7 +227,7 @@ the machine contains powerful or related hardware.
 An unavailable backend **MUST** normally report `False` rather than crash
 automatic discovery or routing.
 
-## 3.4 `details`
+## 3.6 `details`
 
 `details` contains diagnostic runtime and physical-device metadata. Depending
 on the backend, appropriate values include:
@@ -290,6 +309,7 @@ Current stable examples are:
 OpenVINO
 OpenVINO Intel GPU
 PyTorch CUDA
+PyTorch MPS
 Torchvision ResNet18 CPU
 ```
 
@@ -684,10 +704,10 @@ include:
 - matching top-five category set regardless of ordering where appropriate;
 - confidence tolerance compared by category rather than list position.
 
-The current CPU, OpenVINO, Intel GPU, and CUDA tests use a tolerance of 0.1
-percentage points in relevant parity checks. That value is workload-specific
-evidence, not a universal tolerance. Every tolerance **MUST** be justified for
-the model, precision, runtime, and task being tested.
+The current CPU, OpenVINO, Intel GPU, CUDA, and MPS tests use a tolerance of
+0.1 percentage points in relevant parity checks. That value is
+workload-specific evidence, not a universal tolerance. Every tolerance
+**MUST** be justified for the model, precision, runtime, and task being tested.
 
 Result metadata **SHOULD** identify the implementation path consistently and
 **SHOULD** expose timing and warm-up fields according to the backend's

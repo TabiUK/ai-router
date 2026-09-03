@@ -12,6 +12,7 @@ from backends.torchvision_classifier import TorchvisionClassifierBackend
 from core.benchmark import BenchmarkStats
 from core.device_types import DeviceType
 from core.policy import RoutingPolicy
+from core.runtime_types import AcceleratorAPI, RuntimeType
 from core.router import AIRouter
 from core.task import Task
 from core.task_types import TaskType
@@ -139,6 +140,8 @@ def assert_unavailable_fallback() -> None:
 
         assert info.name == CUDA_BACKEND_NAME
         assert info.device_type == DeviceType.GPU
+        assert info.runtime == RuntimeType.PYTORCH
+        assert info.accelerator_api == AcceleratorAPI.CUDA
         assert not info.available
         assert info.details["device_index"] == 0
         assert info.details["device_count"] == 0
@@ -192,6 +195,8 @@ def main() -> None:
 
     assert cuda_info.name == CUDA_BACKEND_NAME
     assert cuda_info.device_type == DeviceType.GPU
+    assert cuda_info.runtime == RuntimeType.PYTORCH
+    assert cuda_info.accelerator_api == AcceleratorAPI.CUDA
     assert cuda_backend.device_index == 0
     assert cuda_backend.warmup_runs == 2
     assert cuda_backend.model is None

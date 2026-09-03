@@ -6,6 +6,7 @@ from core.backend_registry import register_backend
 from core.device_types import DeviceType
 from core.task_types import TaskType
 from core.policy import RoutingPolicy
+from core.runtime_types import RuntimeType
 
 class CPUBackend(Backend):
 
@@ -13,6 +14,8 @@ class CPUBackend(Backend):
         return BackendInfo(
             name=platform.processor() or "CPU",
             device_type=DeviceType.CPU,
+            runtime=RuntimeType.NATIVE,
+            accelerator_api=None,
             available=True,
             details={
                 "architecture": platform.machine(),
