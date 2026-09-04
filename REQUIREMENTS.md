@@ -49,8 +49,9 @@ pins remain `2.2.2` and `0.17.2`; the `+cu121` suffix identifies the Windows
 CUDA wheel build.
 
 The externally provisioned RunPod RTX 4090 validation used Python 3.12.3,
-PyTorch 2.10.0+cu128, and Torchvision 0.25.0+cu128. Those versions are evidence
-for that environment and do not replace the versions pinned by this project.
+PyTorch 2.10.0+cu128, Torchvision 0.25.0+cu128, and CUDA build 12.8. Those
+versions are evidence for that environment and do not replace the versions
+pinned by this project or widen packaged Python support beyond `>=3.11,<3.12`.
 
 ## Optional OpenVINO
 
@@ -130,7 +131,10 @@ Current real-hardware validation includes:
 - Intel x86_64 macOS: Torchvision CPU and OpenVINO CPU;
 - Apple M1 Pro arm64 macOS: Torchvision CPU and PyTorch MPS;
 - 64-bit Windows: Intel Iris Xe through OpenVINO and NVIDIA RTX A1000 Laptop GPU
-  through PyTorch CUDA.
+  through PyTorch CUDA;
+- externally provisioned 64-bit RunPod Linux: NVIDIA GeForce RTX 4090 through
+  PyTorch 2.10.0+cu128 with CUDA build 12.8. This is validation evidence
+  only and does not widen the packaged Python support range.
 
 Availability and performance on other systems depend on hardware, drivers,
 framework wheels, runtime plugins, and system load. A validated device family

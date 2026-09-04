@@ -88,8 +88,6 @@ Real-hardware validation includes:
 
 Current-public-main validation was completed on externally provisioned RunPod Linux with an NVIDIA GeForce RTX 4090, Python 3.12.3, PyTorch 2.10.0+cu128, Torchvision 0.25.0+cu128, and CUDA build 12.8. This remains external validation evidence: it does not change the packaged `requires-python = ">=3.11,<3.12"` support requirement or the dependency versions in `pyproject.toml`.
 
-The latest committed routing checkpoint is `d19ac92 Improve cold-start routing and performance scoring`. Public-release metadata (`README.md`, Apache-2.0 `LICENSE`, and packaging/ignore updates) is staged but not yet committed.
-
 ---
 
 # Project Structure
@@ -110,9 +108,11 @@ ai-router/
 │   ├── backend.py
 │   ├── backend_registry.py
 │   ├── benchmark.py
+│   ├── device_types.py
 │   ├── policy.py
 │   ├── registry.py
 │   ├── router.py
+│   ├── runtime_types.py
 │   ├── task.py
 │   └── task_types.py
 │
@@ -132,7 +132,7 @@ ai-router/
 │   └── run_task_png.py
 │
 ├── tests/
-│   └── test_mps_backend.py
+│   └── standalone regression and hardware-evidence tests
 │
 ├── .gitignore
 ├── BACKEND_GUIDE.md
@@ -226,11 +226,15 @@ Backend
    │
    ├── TorchvisionClassifierBackend
    │
+   ├── OpenVINOBackend
+   │
+   ├── OpenVINOIntelGPUBackend
+   │
+   ├── PyTorchCUDABackend
+   │
    ├── PyTorchMPSBackend
    │
    ├── IntelNPUBackend          (future)
-   │
-   ├── PyTorchCUDABackend
    │
    ├── AMDBackend               (future)
    │
@@ -987,8 +991,6 @@ routing results are hardware- and load-specific.
 
 ## Current Next Priorities
 
-- Decide how the internal `README_CHATGPT.md` handover will be excluded from the eventual public repository.
-- Complete the public-release metadata commit after review.
 - Continue cross-hardware evidence collection before treating accelerator scores as broadly optimal.
 - Validate real NPU hardware before considering an OpenVINO NPU production backend.
 - Design persistent benchmark storage, hardware/load monitoring, and additional task backends separately.
@@ -1216,7 +1218,7 @@ Current progression:
 [✓] Earlier externally provisioned ComfyUI BALANCED cold-start evidence recorded on RunPod RTX 4090
 [✓] Earlier externally provisioned ComfyUI stale-evidence refresh evidence recorded on RunPod RTX 4090
 [✓] Duplicate older ComfyUI custom-node copy removed
-[✓] Root public README and Apache-2.0 release metadata prepared and staged
+[✓] Root public README and Apache-2.0 release metadata prepared
 [ ] Persistent benchmark database
 [ ] Hardware/load monitoring
 [ ] REST API

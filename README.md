@@ -47,11 +47,11 @@ To keep a deterministic loser from retaining old evidence indefinitely, each pol
 
 Choose the install path that matches your system.
 
-### Windows with NVIDA CUDA
+### Windows with NVIDIA CUDA
 
-On Windows system with an NVIDA GPU, install the CUDA-enabled PyTorch wheels before installing AI Router.
+On a Windows system with an NVIDIA GPU, install the CUDA-enabled PyTorch wheels before installing AI Router.
 
-The CUDA-enabled PyTorch wheels must be installed before AI Router so that the standard installation does not select the CPU-only PyTorch Build.
+The CUDA-enabled PyTorch wheels must be installed before AI Router so that the standard installation does not select the CPU-only PyTorch build.
 ```powershell
 git clone https://github.com/TabiUK/ai-router.git
 cd ai-router
@@ -84,7 +84,7 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
-MPS requires no additional Python dependency beyond the existing base PyTorch/Torchvision stack, but is available only when `torch.backends.mps.is_built()` and `torch.backends.mps.is_available()` both report true. See [BUILD.md](BUILD.md) before replacing the pinned base wheels. The pretrained ResNet18 weights are downloaded by Torchvision on first use if they are not already cached.
+MPS requires no additional Python dependency beyond the existing base PyTorch/Torchvision stack, but is available only when `torch.backends.mps.is_built()` and `torch.backends.mps.is_available()` both report true. See [REQUIREMENTS.md](REQUIREMENTS.md) before replacing the pinned base wheels. The pretrained ResNet18 weights are downloaded by Torchvision on first use if they are not already cached.
 
 ## Minimal Python example
 
@@ -124,7 +124,7 @@ ComfyUI/custom_nodes/ComfyUI-AIRouter
 
 Restart ComfyUI and find the nodes under the `AI Router` category. Routing policy, benchmark history, and backend execution remain in AI Router rather than the ComfyUI adapter.
 
-Automated router tests and the actual RunPod RTX 4090 workflow validated cold-start, historical scoring, and periodic refresh. After initial exploration, BALANCED preferred Torchvision CPU; the UI then observed ten normal CPU routes, one PyTorch CUDA evidence refresh, another ten normal CPU routes, and a second CUDA refresh. Refresh did not force CUDA to win: CUDA inference was about 1.2 ms but its refresh total was about 16.8-17.0 ms, while later CPU totals were about 11.5-13 ms. Because routing scores total execution time, BALANCED correctly continued to prefer CPU for this small workload.
+Automated router tests and the earlier externally provisioned RunPod RTX 4090 workflow validated cold-start, historical scoring, and periodic refresh. After initial exploration, BALANCED preferred Torchvision CPU; the UI then observed ten normal CPU routes, one PyTorch CUDA evidence refresh, another ten normal CPU routes, and a second CUDA refresh. Refresh did not force CUDA to win: CUDA inference was about 1.2 ms but its refresh total was about 16.8-17.0 ms, while later CPU totals were about 11.5-13 ms. Because routing scores total execution time, BALANCED correctly continued to prefer CPU for this small workload.
 
 ## Validated platforms
 

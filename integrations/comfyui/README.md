@@ -17,7 +17,7 @@ Load Image
 -> AI Router Show Classification
 ```
 
-Ending the workflow with Show Classification fixes the previous `Prompt has no outputs` error encountered when the classifier was used without an output node.
+Ending the workflow with Show Classification fixes the `Prompt has no outputs` error that occurs when the classifier is used without an output node.
 
 ## Installation
 
@@ -32,7 +32,9 @@ Restart ComfyUI. The nodes appear under the `AI Router` category.
 
 ## RunPod RTX 4090 validation
 
-The following UI flows were validated on the RunPod NVIDIA GeForce RTX 4090 environment:
+The ComfyUI integration has been validated on RunPod with an NVIDIA GeForce RTX 4090.
+
+The following UI flows were validated:
 
 ```text
 AI Router Device Info
@@ -43,11 +45,21 @@ Load Image
 -> AI Router Show Classification
 ```
 
-Discovery displayed the generic x86_64 CPU, available PyTorch CUDA on NVIDIA GeForce RTX 4090, and available Torchvision ResNet18 CPU. OpenVINO CPU and OpenVINO Intel GPU were unavailable in this environment. Classification predictions and both timing values displayed successfully.
+Device discovery correctly reported:
 
-BALANCED routing alternated CPU and CUDA while their positive-base backend/task histories were below five records. After both reached five records, normal historical scoring resumed and preferred Torchvision CPU.
+- generic x86_64 CPU
+- PyTorch CUDA on NVIDIA GeForce RTX 4090
+- Torchvision ResNet18 CPU
 
-The UI then validated periodic stale-evidence refresh:
+OpenVINO CPU and OpenVINO Intel GPU were unavailable in that environment.
+
+Image classification completed successfully and returned the selected backend, predictions, inference time, and total execution time.
+
+BALANCED routing was validated with cold-start exploration and periodic evidence refresh.
+
+During cold start, available compatible positive-base-score CPU and CUDA backend/task pairs were sampled until both had sufficient benchmark history. Normal historical scoring then resumed.
+
+Periodic evidence refresh followed the expected cadence:
 
 ```text
 10 normal CPU routes
@@ -56,6 +68,10 @@ The UI then validated periodic stale-evidence refresh:
 -> 1 PyTorch CUDA refresh
 ```
 
-At the first refresh, CPU still had the higher combined score (approximately `82.52` versus CUDA `78.95`), but CUDA was selected to update its older evidence. The next refresh occurred after exactly ten more normal CPU routes. CUDA inference was approximately 1.2 ms, while CUDA refresh totals were approximately 16.8-17.0 ms and later CPU totals were roughly 11.5-13 ms. Because routing uses total execution time, BALANCED correctly continued preferring CPU for this workload. Refresh provides current evidence to an eligible losing backend; it does not force CUDA or any device to win.
+Periodic refresh updates stale benchmark evidence for an eligible non-winning backend. It does not force CUDA, or any other backend, to become the routing winner.
 
-Refresh is deterministic, excludes base-score-zero candidates such as CUDA under LOW_POWER, and leaves explicit `benchmark_backend` behavior separate. Its counters are in memory per `AIRouter`, keyed by policy and task type. The behavior is covered by automated router tests and was validated through this RunPod RTX 4090 ComfyUI workflow; it should not be generalized to every platform.
+Refresh is deterministic and excludes zero-base-score candidates, such as CUDA under `LOW_POWER`. Explicit `benchmark_backend` behavior remains separate.
+
+Refresh counters are held in memory per `AIRouter` instance and are keyed by policy and task type.
+
+Cold-start exploration and periodic refresh behavior are also covered by automated router tests.
