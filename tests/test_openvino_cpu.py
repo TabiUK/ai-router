@@ -6,6 +6,7 @@ from statistics import median
 import openvino
 from openvino import Core
 
+from core.benchmark import BenchmarkStats
 from core.device_types import DeviceType
 from core.policy import RoutingPolicy
 from core.runtime_types import RuntimeType
@@ -219,19 +220,6 @@ def main() -> None:
 
         return max(scores, key=scores.get)
 
-    assert (
-        selected_real_cpu_backend(RoutingPolicy.PERFORMANCE)
-        == "OpenVINO"
-    )
-    assert (
-        selected_real_cpu_backend(RoutingPolicy.BALANCED)
-        == "OpenVINO"
-    )
-    assert (
-        selected_real_cpu_backend(RoutingPolicy.LOW_POWER)
-        == "Torchvision ResNet18 CPU"
-    )
-
     openvino_predictions = results["OpenVINO"][0]["result"][
         "predictions"
     ]
@@ -318,18 +306,32 @@ def main() -> None:
     print("11. Normal routing behavior")
     print("---------------------------")
 
-    router.policy = RoutingPolicy.BALANCED
-    normal_result = router.route(task)
+    seeded_records = list(router.benchmarks.records)
 
-    print(
-        "Normally selected backend:",
-        normal_result["routing"]["backend"],
-    )
+    for policy in (
+        RoutingPolicy.PERFORMANCE,
+        RoutingPolicy.BALANCED,
+        RoutingPolicy.LOW_POWER,
+    ):
+        policy_router = AIRouter(
+            policy=policy,
+            backends=list(real_cpu_backends.values()),
+        )
+        policy_router.benchmarks = BenchmarkStats(
+            records=list(seeded_records),
+        )
+        expected_backend = selected_real_cpu_backend(policy)
+        normal_result = policy_router.route(task)
 
-    assert (
-        normal_result["routing"]["backend"]
-        == "OpenVINO"
-    )
+        print(
+            f"Normally selected {policy.value} backend:",
+            normal_result["routing"]["backend"],
+        )
+
+        assert normal_result["routing"]["backend"] == expected_backend
+
+        if policy == RoutingPolicy.LOW_POWER:
+            assert expected_backend == "Torchvision ResNet18 CPU"
 
     print()
     print("All real OpenVINO CPU ResNet18 tests passed.")

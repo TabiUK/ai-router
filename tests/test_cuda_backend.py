@@ -351,10 +351,7 @@ def main() -> None:
 
     router.policy = RoutingPolicy.PERFORMANCE
 
-    while len(router.benchmarks.filter_records(
-        backend=TORCHVISION_BACKEND_NAME,
-        task_type=TaskType.IMAGE_CLASSIFICATION.value,
-    )) < 5:
+    while True:
         eligible_record_counts = {}
 
         for backend in router.backends:
@@ -371,6 +368,12 @@ def main() -> None:
                         task_type=task.task_type.value,
                     )
                 )
+
+        if all(
+            record_count >= 5
+            for record_count in eligible_record_counts.values()
+        ):
+            break
 
         least_sampled_count = min(eligible_record_counts.values())
         routed = router.route(task)

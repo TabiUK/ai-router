@@ -246,17 +246,20 @@ def main():
         RoutingPolicy.BALANCED,
         RoutingPolicy.LOW_POWER,
     ):
-        router.benchmarks = BenchmarkStats(
+        policy_router = AIRouter(
+            policy=policy,
+            backends=[cpu_backend, gpu_backend],
+        )
+        policy_router.benchmarks = BenchmarkStats(
             records=list(seeded_records),
         )
-        router.policy = policy
 
         expected_backend = expected_router_backend(
-            router,
+            policy_router,
             task,
             policy,
         )
-        routed = router.route(task)
+        routed = policy_router.route(task)
 
         assert routed["routing"]["backend"] == expected_backend
 
