@@ -9,10 +9,10 @@ history, portability, and fallback behavior.
 
 The words **MUST**, **SHOULD**, and **MAY** are normative:
 
-- **MUST** identifies a requirement needed for compatibility or correctness.
-- **SHOULD** identifies the normal pattern; deviations require a documented
+* **MUST** identifies a requirement needed for compatibility or correctness.
+* **SHOULD** identifies the normal pattern; deviations require a documented
   reason and appropriate tests.
-- **MAY** identifies an optional pattern that is compatible with the current
+* **MAY** identifies an optional pattern that is compatible with the current
   design.
 
 This guide does not introduce a new API. The current contract is defined by
@@ -34,11 +34,12 @@ implementations provide current production examples. Where an existing
 implementation differs from a recommended rule, this guide identifies that
 difference as a current limitation or compatibility consideration.
 
----
 
 # 1. Current routing flow
 
 `AIRouter` currently performs these steps:
+
+
 
 1. Discover or accept injected backend instances.
 2. Call `detect()` on each backend.
@@ -47,6 +48,7 @@ difference as a current limitation or compatibility consideration.
 5. Calculate each compatible candidate's base policy score and any eligible
    historical performance bonus.
 6. For an ordinary route, apply the following selection order:
+
    1. If an available, compatible candidate with `base_score > 0` has fewer
       than five matching records, cold-start exploration selects the
       least-sampled eligible backend/task pair; combined score and then
@@ -89,7 +91,6 @@ normal-score tie behavior as evidence of routing preference. Registration order
 is, however, the defined tie-break when refresh candidates have equal evidence
 age.
 
----
 
 # 2. Backend interface contract
 
@@ -164,7 +165,6 @@ schema. When a result is a dictionary containing `inference_time_ms`, the
 router copies that value into its benchmark record. Otherwise the recorded
 inference time is `None`.
 
----
 
 # 3. `BackendInfo` fields
 
@@ -186,9 +186,9 @@ BackendInfo(
 `name` is currently the stable routing and benchmark identity. The router uses
 it to:
 
-- report the selected backend;
-- select an explicit `benchmark_backend`;
-- scope benchmark history with the task type.
+* report the selected backend;
+* select an explicit `benchmark_backend`;
+* scope benchmark history with the task type.
 
 A new production backend's name **MUST** be stable and **MUST** be unique among
 simultaneously registered production backends.
@@ -246,7 +246,6 @@ an availability-query error
 Machine-specific hardware information **SHOULD** normally be reported here
 rather than embedded in `name` or used as generic routing logic.
 
----
 
 # 4. Tasks and payloads
 
@@ -280,7 +279,6 @@ that Pillow can open. A new implementation of that workload **SHOULD** preserve
 the established expectation unless a coordinated task-contract change is
 approved.
 
----
 
 # 5. Stable identity rules
 
@@ -293,12 +291,12 @@ to callers using `benchmark_backend`.
 
 It **MUST NOT** casually include:
 
-- a device index such as `0`;
-- an OpenVINO device ID such as `GPU.0`;
-- a PCI location;
-- a temporary runtime identifier;
-- a machine-specific hardware number;
-- a detected model name that changes when hardware changes.
+* a device index such as `0`;
+* an OpenVINO device ID such as `GPU.0`;
+* a PCI location;
+* a temporary runtime identifier;
+* a machine-specific hardware number;
+* a detected model name that changes when hardware changes.
 
 Otherwise the same logical backend fragments into unrelated history keys, and
 explicit benchmark selection becomes machine-specific.
@@ -345,32 +343,31 @@ routing, benchmark keys, diagnostics, and public metadata.
 
 ## 5.5 Current compatibility considerations
 
-- `CPUBackend` currently uses `platform.processor() or "CPU"` as
+* `CPUBackend` currently uses `platform.processor() or "CPU"` as
   `BackendInfo.name`. This can be machine-specific and does not follow the
   recommended stable-name pattern. It remains unchanged for compatibility in
   this milestone; new backends **SHOULD NOT** copy that pattern.
-- Generic non-CPU `OpenVINOBackend` configurations use diagnostic names such
+* Generic non-CPU `OpenVINOBackend` configurations use diagnostic names such
   as `OpenVINO GPU.0 Diagnostic`, and their result identities include the
   configured target. These are diagnostic configurations. The registered
   Intel GPU backend instead uses the stable routing identity
   `OpenVINO Intel GPU`.
-- `BackendInfo.name` has mixed historical semantics. Any future structural
+* `BackendInfo.name` has mixed historical semantics. Any future structural
   separation of backend and physical-device identity must update routing,
   history, diagnostics, and results together rather than changing one field in
   isolation.
 
----
 
 # 6. Dynamic hardware detection
 
 A backend **MUST** discover runtime devices dynamically when the runtime
 provides discovery APIs.
 
-- Intel GPU support **MUST NOT** assume the Intel device is `GPU.0`.
-- CUDA support **MUST NOT** assume `cuda:0` is a particular GPU model.
-- A configured index **MUST** be checked against the runtime's current device
+* Intel GPU support **MUST NOT** assume the Intel device is `GPU.0`.
+* CUDA support **MUST NOT** assume `cuda:0` is a particular GPU model.
+* A configured index **MUST** be checked against the runtime's current device
   count before device-specific properties are queried.
-- Runtime device names **SHOULD** be metadata rather than hard-coded hardware
+* Runtime device names **SHOULD** be metadata rather than hard-coded hardware
   truth.
 
 Expected absence of an optional runtime or compatible device **SHOULD** produce
@@ -385,27 +382,26 @@ systems, and systems missing optional runtimes.
 
 There are two current limitations to note:
 
-- `OpenVINOIntelGPUBackend` performs part of device discovery during
+* `OpenVINOIntelGPUBackend` performs part of device discovery during
   construction by creating a `Core` and calling `find_intel_gpu_device()`.
   It does not load a model, but new backends **SHOULD** prefer lightweight
   construction and contain expected discovery failures in `detect()`.
-- `find_intel_gpu_device()` intentionally propagates `FULL_DEVICE_NAME`
+* `find_intel_gpu_device()` intentionally propagates `FULL_DEVICE_NAME`
   property-query failures, and an existing test verifies that diagnostic
   behavior. Contributors **MUST NOT** assume that helper provides a complete
   production discovery exception boundary.
 
----
 
 # 7. Availability and fallback behavior
 
 On a machine where a backend cannot run, it **SHOULD**:
 
-- return `available=False`;
-- avoid model loading and weight downloads;
-- avoid compilation, inference, and warm-up;
-- avoid querying a known-invalid device index;
-- retain useful runtime and error details where possible;
-- allow other production backends to continue normally.
+* return `available=False`;
+* avoid model loading and weight downloads;
+* avoid compilation, inference, and warm-up;
+* avoid querying a known-invalid device index;
+* retain useful runtime and error details where possible;
+* allow other production backends to continue normally.
 
 Optional runtime absence is an expected environment, not a fatal discovery
 error. CUDA registration must remain safe on macOS and CPU-only installations.
@@ -420,7 +416,6 @@ unavailable. CUDA explicitly calls `detect()` before model construction and
 raises a clearer `RuntimeError`. This is a current limitation, not a claim that
 generic OpenVINO already provides the same direct-run error contract.
 
----
 
 # 8. Registration and dependency injection
 
@@ -456,7 +451,6 @@ router = AIRouter(
 `AIRouter` copies the supplied list, so later mutation of the caller's list
 does not change the router's backend collection.
 
----
 
 # 9. Lazy initialization
 
@@ -479,17 +473,16 @@ Lazy state **SHOULD** use an explicit sentinel such as `model is None` or
 Lazy initialization remains inside `AIRouter`'s timed `run()` call. A backend
 **MUST NOT** adjust its reported router total to hide cold-start cost.
 
----
 
 # 10. Warm-up and stabilization
 
 Warm-up, when justified, **MUST** be:
 
-- bounded by a fixed non-negative count;
-- deterministic;
-- visible in the first end-to-end router timing;
-- performed only once per backend instance as documented;
-- reported in result metadata where the backend exposes warm-up fields.
+* bounded by a fixed non-negative count;
+* deterministic;
+* visible in the first end-to-end router timing;
+* performed only once per backend instance as documented;
+* reported in result metadata where the backend exposes warm-up fields.
 
 Warm-up **MUST NOT** be an adaptive “run until fast enough” loop.
 
@@ -508,7 +501,6 @@ Warm-up work performed in `run()` **MUST** remain part of the router's first
 `execution_time_ms`. Only the result-producing inference belongs in
 `inference_time_ms`.
 
----
 
 # 11. Timing contract
 
@@ -553,7 +545,6 @@ outside `inference_time_ms` but inside the router total.
 A backend **MAY** use a more accurate runtime-native timing facility if it
 preserves these same boundaries and documents the measurement.
 
----
 
 # 12. Benchmark-history contract
 
@@ -640,7 +631,6 @@ to persistent storage. Routing tests that inspect refresh cadence **SHOULD** use
 a fresh `AIRouter`, because replacing `BenchmarkStats` alone does not replace
 the router-owned refresh counters.
 
----
 
 # 13. Scoring and evidence
 
@@ -688,7 +678,6 @@ model and runtime caches
 Measured numbers **MUST NOT** be hard-coded as permanent expectations for a
 hardware model.
 
----
 
 # 14. Prediction and result correctness
 
@@ -699,13 +688,13 @@ the result is materially different.
 For the current ResNet18 image-classification workload, useful parity checks
 include:
 
-- exactly the expected number of predictions;
-- matching top-1 category;
-- matching top-five category set regardless of ordering where appropriate;
-- confidence tolerance compared by category rather than list position.
+* exactly the expected number of predictions;
+* matching top-1 category;
+* matching top-five category set regardless of ordering where appropriate;
+* confidence tolerance compared by category rather than list position.
 
 The current CPU, OpenVINO, Intel GPU, CUDA, and MPS tests use a tolerance of
-0.1 percentage points in relevant parity checks. That value is
+0\.1 percentage points in relevant parity checks. That value is
 workload-specific evidence, not a universal tolerance. Every tolerance
 **MUST** be justified for the model, precision, runtime, and task being tested.
 
@@ -714,7 +703,6 @@ Result metadata **SHOULD** identify the implementation path consistently and
 documented result convention. These dictionaries remain conventions until a
 formal result schema is added to the core interface.
 
----
 
 # 15. Device-placement validation
 
@@ -732,15 +720,14 @@ and compare it with the dynamically selected target.
 
 For CUDA, a real-device test **SHOULD** verify:
 
-- all model parameters are on the configured CUDA device;
-- the input tensor is on that device;
-- the output tensor is on that device;
-- timing synchronization targets that same device.
+* all model parameters are on the configured CUDA device;
+* the input tensor is on that device;
+* the output tensor is on that device;
+* timing synchronization targets that same device.
 
 Task Manager, device enumeration, or `torch.cuda.is_available()` alone
 **MUST NOT** be treated as execution proof.
 
----
 
 # 16. Cross-platform behavior
 
@@ -751,15 +738,16 @@ routed.
 
 At minimum, contributors **SHOULD** consider:
 
-- macOS with no CUDA support;
-- Windows with CPU-only PyTorch;
-- Linux without optional accelerator runtimes or drivers;
-- systems where a runtime is installed but exposes no compatible device;
-- configured device indices that are outside the current device count;
-- runtime property queries that fail for an advertised device.
+* macOS with no CUDA support;
+* Windows with CPU-only PyTorch;
+* Linux without optional accelerator runtimes or drivers;
+* systems where a runtime is installed but exposes no compatible device;
+* configured device indices that are outside the current device count;
+* runtime property queries that fail for an advertised device.
 
-Platform-specific installation requirements belong in `REQUIREMENTS.md` and
-`BUILD.md`. Backend-authoring behavior belongs in this guide.
+Platform-specific installation commands belong in `BUILD.md`. Platform,
+runtime, and version requirements belong in `REQUIREMENTS.md`.
+Backend-authoring behavior belongs in this guide.
 
 ## 16.1 Dependencies and optional runtimes
 
@@ -774,15 +762,16 @@ CPU and CUDA PyTorch wheel variants can share the same upstream version.
 Contributors **MUST** treat physical hardware, the operating-system driver, the
 runtime or library, and Python package availability as separate layers.
 
-Platform-specific installation commands remain in `REQUIREMENTS.md` and
-`BUILD.md`.
+Platform-specific installation commands remain in `BUILD.md`. Corresponding
+platform, runtime, and version requirements remain in `REQUIREMENTS.md`.
 
----
 
 # 17. Recommended test layers
 
 A new production backend **SHOULD** have the following layers in proportion to
 its risk and hardware availability:
+
+
 
 1. **Syntax and import test** — the module imports and production discovery
    remains safe without its optional runtime or hardware.
@@ -814,7 +803,6 @@ hardware-specific failure does not obscure portable contract coverage.
 Tests **MUST NOT** require exact benchmark timings or permanent winners across
 different machines and loads.
 
----
 
 # 18. Contributor checklist
 

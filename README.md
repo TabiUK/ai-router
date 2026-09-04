@@ -9,7 +9,7 @@ The project is under active development and is not yet a stable production API. 
 ## Current backends
 
 | Backend | Current role |
-| --- | --- |
+|----|----|
 | Torchvision ResNet18 CPU | Always-available CPU image classification |
 | OpenVINO | Optional OpenVINO CPU image classification |
 | OpenVINO Intel GPU | Optional image classification when OpenVINO detects an Intel GPU |
@@ -33,9 +33,9 @@ once per backend instance.
 
 AI Router provides three policies:
 
-- `performance`: prioritizes execution performance.
-- `balanced`: the default compromise between backend preferences.
-- `low_power`: prefers backends with an evidence-backed low-power score. Timing alone is not treated as power evidence.
+* `performance`: prioritizes execution performance.
+* `balanced`: the default compromise between backend preferences.
+* `low_power`: prefers backends with an evidence-backed low-power score. Timing alone is not treated as power evidence.
 
 On a cold start, ordinary routing explores available, capable backends with a positive policy score until each backend/task pair has five records. It selects the least-sampled eligible backend first, with deterministic score and registration-order tie-breaking. Passing `benchmark_backend="Backend Name"` remains an explicit way to seed a chosen backend up to the same five-record threshold.
 
@@ -44,6 +44,34 @@ After five records, recent performance contributes to routing. The score uses th
 To keep a deterministic loser from retaining old evidence indefinitely, each policy/task pair gets one periodic refresh after ten successful normal scoring routes. The next ordinary route selects the available, compatible positive-base non-winner with the oldest matching benchmark evidence, with registration order breaking equal-age ties, and then resets the counter. The cadence repeats as ten normal routes followed by one refresh. Zero-base candidates, including LOW_POWER accelerators with no positive policy score, cannot be refreshed; explicit `benchmark_backend` behavior remains separate and unchanged. History and refresh counters are in memory per `AIRouter` instance.
 
 ## Installation
+
+Choose the install path that matches your system.
+
+### Windows with NVIDA CUDA
+
+On Windows system with an NVIDA GPU, install the CUDA-enabled PyTorch wheels before installing AI Router.
+
+The CUDA-enabled PyTorch wheels must be installed before AI Router so that the standard installation does not select the CPU-only PyTorch Build.
+```powershell
+git clone https://github.com/TabiUK/ai-router.git
+cd ai-router
+
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+
+python -m pip install torch==2.2.2+cu121 torchvision==0.17.2+cu121 --index-url https://download.pytorch.org/whl/cu121
+
+python -m pip install -e .
+```
+Optional OpenVINO support:
+
+```powershell
+python -m pip install -e ".[openvino]"
+```
+
+### Standard installation
 
 The packaged dependency set currently targets Python 3.11.
 
@@ -56,15 +84,7 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
-On Windows, activate the environment with `.venv\Scripts\activate`.
-
-Install optional OpenVINO support with:
-
-```bash
-python -m pip install -e ".[openvino]"
-```
-
-CUDA requires a compatible NVIDIA driver and CUDA-enabled PyTorch/Torchvision wheels appropriate for the platform. MPS requires no additional Python dependency beyond the existing base PyTorch/Torchvision stack, but is available only when `torch.backends.mps.is_built()` and `torch.backends.mps.is_available()` both report true. See [BUILD.md](BUILD.md) before replacing the pinned base wheels. The pretrained ResNet18 weights are downloaded by Torchvision on first use if they are not already cached.
+MPS requires no additional Python dependency beyond the existing base PyTorch/Torchvision stack, but is available only when `torch.backends.mps.is_built()` and `torch.backends.mps.is_available()` both report true. See [BUILD.md](BUILD.md) before replacing the pinned base wheels. The pretrained ResNet18 weights are downloaded by Torchvision on first use if they are not already cached.
 
 ## Minimal Python example
 
@@ -88,12 +108,12 @@ print(result["result"]["predictions"])
 
 ## ComfyUI
 
-The thin adapter in [`integrations/comfyui/`](integrations/comfyui/) exposes:
+The thin adapter in `integrations/comfyui/` exposes:
 
-- AI Router Device Info
-- AI Router Show Device Info
-- AI Router Image Classification
-- AI Router Show Classification
+* AI Router Device Info
+* AI Router Show Device Info
+* AI Router Image Classification
+* AI Router Show Classification
 
 For a development checkout, link that directory into ComfyUI:
 
@@ -110,10 +130,10 @@ Automated router tests and the actual RunPod RTX 4090 workflow validated cold-st
 
 Current real-hardware validation includes:
 
-- Intel x86_64 macOS: Torchvision CPU and OpenVINO CPU.
-- Apple M1 Pro arm64 macOS 15.7.7: PyTorch MPS ResNet18 inference and router participation on Python 3.11.9, PyTorch 2.2.2, and Torchvision 0.17.2.
-- 64-bit Windows: OpenVINO on Intel Iris Xe Graphics and PyTorch CUDA on an NVIDIA RTX A1000 Laptop GPU.
-- 64-bit Linux on RunPod with an NVIDIA GeForce RTX 4090: AI Router source,
+* Intel x86_64 macOS: Torchvision CPU and OpenVINO CPU.
+* Apple M1 Pro arm64 macOS 15.7.7: PyTorch MPS ResNet18 inference and router participation on Python 3.11.9, PyTorch 2.2.2, and Torchvision 0.17.2.
+* 64-bit Windows: OpenVINO on Intel Iris Xe Graphics and PyTorch CUDA on an NVIDIA RTX A1000 Laptop GPU.
+* 64-bit Linux on RunPod with an NVIDIA GeForce RTX 4090: AI Router source,
   the CUDA backend, routing tests, and ComfyUI integration were validated on
   Python 3.12.3 with Torch 2.10.0+cu128 and Torchvision 0.25.0+cu128. This
   externally provisioned environment is not represented by the dependency
@@ -135,9 +155,9 @@ tests/                Standalone regression and hardware-evidence tests
 
 ## Documentation
 
-- [Backend contributor guide](BACKEND_GUIDE.md)
-- [Build and setup guide](BUILD.md)
-- [Validated requirements](REQUIREMENTS.md)
+* [Backend contributor guide](BACKEND_GUIDE.md)
+* [Build and setup guide](BUILD.md)
+* [Validated requirements](REQUIREMENTS.md)
 
 ## License
 

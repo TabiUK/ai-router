@@ -66,7 +66,7 @@ Implemented routing and measurement behavior:
 - Exclusion of zero-score backends from automatic exploration, preserving LOW_POWER behavior
 - Mock Accelerator available only through explicit test injection
 
-ComfyUI integration is implemented under `integrations/comfyui/` and uses the same `AIRouter` instance, routing, exploration, and history behavior as the Python API. It provides Device Info, Show Device Info, Image Classification, and Show Classification nodes. The complete device-info and classification UI flows have been validated specifically on the RunPod RTX 4090 environment.
+ComfyUI integration is implemented under `integrations/comfyui/` and uses the same `AIRouter` instance, routing, exploration, and history behavior as the Python API. It provides Device Info, Show Device Info, Image Classification, and Show Classification nodes. Previous externally provisioned RunPod RTX 4090 testing provides validation evidence for the complete device-info and classification UI flows, but current public-main revalidation is still pending.
 
 ## Validated environments
 
@@ -85,9 +85,8 @@ Real-hardware validation includes:
 - Intel x86_64 macOS: Torchvision CPU and OpenVINO CPU
 - Apple M1 Pro arm64 macOS 15.7.7: PyTorch MPS ResNet18 inference and router participation on Python 3.11.9, PyTorch 2.2.2, and Torchvision 0.17.2
 - Windows: Intel Iris Xe OpenVINO GPU and NVIDIA RTX A1000 Laptop GPU CUDA
-- RunPod Linux on NVIDIA RTX 4090: Python 3.12.3, Torch 2.10.0+cu128, Torchvision 0.25.0+cu128, CUDA backend, routing tests, and ComfyUI integration
 
-The RunPod environment was externally provisioned and is not represented by the dependency versions pinned in `pyproject.toml`.
+Previous externally provisioned validation evidence was collected on RunPod Linux with an NVIDIA RTX 4090, Python 3.12.3, Torch 2.10.0+cu128, and Torchvision 0.25.0+cu128. That environment is not represented by the dependency versions pinned in `pyproject.toml` and is not part of the current validated public-release hardware scope. Current public-main revalidation on RunPod is still pending.
 
 The latest committed routing checkpoint is `d19ac92 Improve cold-start routing and performance scoring`. Public-release metadata (`README.md`, Apache-2.0 `LICENSE`, and packaging/ignore updates) is staged but not yet committed.
 
@@ -231,7 +230,7 @@ Backend
    │
    ├── IntelNPUBackend          (future)
    │
-   ├── NvidiaCUDABackend
+   ├── PyTorchCUDABackend
    │
    ├── AMDBackend               (future)
    │
@@ -510,34 +509,9 @@ Future routing decisions should therefore consider both cold-start cost and warm
 
 # Python Environment
 
-Create a virtual environment:
-
-```bash
-python3 -m venv .venv
-```
-
-Activate it on macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install the project in editable mode:
-
-```bash
-python -m pip install -e .
-```
-
-Current working AI dependencies include:
-
-```text
-torch
-torchvision
-pillow
-numpy==1.26.4
-```
-
-The NumPy version is currently pinned because PyTorch 2.2.2 on the development Mac produced ABI compatibility warnings with NumPy 2.x.
+- See `BUILD.md` for installation and environment setup.
+- See `REQUIREMENTS.md` for supported versions, optional runtimes, hardware,
+  and compatibility requirements.
 
 ---
 
@@ -704,7 +678,7 @@ else:
     bonus = 3000 / (warm_time + 120)
 ```
 
-The branches meet at 60 ms, remain bounded at 25 points, and allow meaningful differences between fast backends to affect routing. Cold-start and periodic refresh behavior are covered by deterministic automated router tests and were also validated through the actual ComfyUI workflow on the RunPod RTX 4090.
+The branches meet at 60 ms, remain bounded at 25 points, and allow meaningful differences between fast backends to affect routing. Cold-start and periodic refresh behavior are covered by deterministic automated router tests and were also exercised as previous externally provisioned evidence through the ComfyUI workflow on the RunPod RTX 4090; current public-main revalidation there is pending.
 
 ---
 
@@ -962,7 +936,7 @@ CUDA Toolkit installation is not required by the validated wheel-based setup.
 When CUDA is unavailable, the backend reports unavailable without constructing
 the model or initializing CUDA, and normal CPU/OpenVINO routing continues.
 
-Real-hardware CUDA validation includes an NVIDIA RTX A1000 Laptop GPU on Windows and an NVIDIA GeForce RTX 4090 on RunPod Linux. Reusable code does not assume either model name.
+Current real-hardware CUDA validation includes an NVIDIA RTX A1000 Laptop GPU on Windows. Previous externally provisioned validation evidence was also collected on an NVIDIA GeForce RTX 4090 on RunPod Linux, but current public-main revalidation there is pending. Reusable code does not assume either model name.
 
 ## Current PyTorch MPS Production State
 
@@ -1118,7 +1092,7 @@ The ComfyUI integration is implemented in `integrations/comfyui/` as a thin adap
 
 The image-classification node keeps one router instance, accepts a ComfyUI image, and returns the selected backend, predictions, inference time, and total execution time. Show Classification accepts those four outputs and displays them as a real ComfyUI output node. This resolves the `Prompt has no outputs` error produced when a workflow ended at the non-output classifier node. Routing behavior remains in the core router rather than being duplicated in the integration.
 
-The following UI flows were validated specifically on the RunPod NVIDIA GeForce RTX 4090 environment:
+The following UI flows were exercised as previous externally provisioned validation evidence on the RunPod NVIDIA GeForce RTX 4090 environment. They are not current public-release validation; public-main revalidation on RunPod is pending:
 
 ```text
 AI Router Device Info
@@ -1137,7 +1111,7 @@ Periodic refresh was then validated through the same UI. The observed steady-sta
 
 The refresh measurements did not establish that CUDA should win this workload. CUDA inference was approximately 1.2 ms, but its total refresh execution was approximately 16.8-17.0 ms; later CPU total execution was roughly 11.5-13 ms. Historical routing uses total execution time, so BALANCED correctly continued selecting Torchvision CPU for this small ResNet18 workload. The mechanism is backend-agnostic and exists to obtain fresh evidence for losing candidates, not to prefer CUDA or any device class.
 
-The active RunPod integration is a symlink from ComfyUI `custom_nodes` to the repository integration directory. A duplicate older plugin copy was removed. The unrelated `comfyui-impact-pack` startup failure is not an AI Router issue.
+In that previous RunPod environment, the integration was a symlink from ComfyUI `custom_nodes` to the repository integration directory. A duplicate older plugin copy was removed. The unrelated `comfyui-impact-pack` startup failure was not an AI Router issue.
 
 Potential future integrations include REST APIs, local model servers, desktop/web applications, and mobile applications. None is currently implemented.
 
@@ -1206,13 +1180,13 @@ Current progression:
 [✓] NVIDIA CUDA routing-evidence experiment completed
 [✓] PyTorch CUDA production backend implemented with scores 37 / 57 / 0
 [✓] CUDA first-use warm-up, history isolation, routing, and fallback regression validated
-[✓] RunPod RTX 4090 CUDA and routing regressions validated on Python 3.12.3 / Torch 2.10.0+cu128
+[✓] Previous externally provisioned RunPod RTX 4090 CUDA and routing evidence recorded on Python 3.12.3 / Torch 2.10.0+cu128; current public-main revalidation pending
 [✓] PyTorch MPS production backend implemented with scores 37 / 57 / 0
 [✓] MPS first-use warm-up, inference, registration, and routing participation validated on Apple M1 Pro
 [✓] ComfyUI Device Info, Show Device Info, Image Classification, and Show Classification nodes implemented
-[✓] ComfyUI device-info and classification output flows validated through the UI on RunPod RTX 4090
-[✓] ComfyUI BALANCED cold-start exploration and return to historical scoring validated on RunPod RTX 4090
-[✓] ComfyUI periodic stale-evidence cadence and two CUDA refreshes validated on RunPod RTX 4090
+[✓] Previous externally provisioned ComfyUI device-info and classification evidence recorded on RunPod RTX 4090; current public-main revalidation pending
+[✓] Previous externally provisioned ComfyUI BALANCED cold-start evidence recorded on RunPod RTX 4090; current public-main revalidation pending
+[✓] Previous externally provisioned ComfyUI stale-evidence refresh evidence recorded on RunPod RTX 4090; current public-main revalidation pending
 [✓] Duplicate older ComfyUI custom-node copy removed
 [✓] Root public README and Apache-2.0 release metadata prepared and staged
 [ ] Persistent benchmark database
